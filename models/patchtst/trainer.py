@@ -1,5 +1,5 @@
 """
-Training pipeline for the PatchTST model.
+Training pipeline for the PatchTST model (src copy).
 """
 
 from __future__ import annotations
@@ -13,16 +13,12 @@ from models.patchtst.loss import PinballLoss
 
 
 class PatchTSTTrainer:
-    """
-    Trainer class for the PatchTST forecasting model.
-    """
-
     def __init__(
         self,
         context_length: int,
         prediction_length: int,
         quantiles: list[float],
-        patch_length: int = 16,
+        patch_length: int = 32,
         stride: int = 8,
         d_model: int = 128,
         n_heads: int = 8,
@@ -30,7 +26,7 @@ class PatchTSTTrainer:
         dropout: float = 0.2,
         learning_rate: float = 1e-3,
         batch_size: int = 64,
-        epochs: int = 20,
+        epochs: int = 5,
         device: str = "auto",
         seed: int = 42,
     ) -> None:
@@ -68,10 +64,6 @@ class PatchTSTTrainer:
 
     @staticmethod
     def _resolve_device(device: str) -> str:
-        """
-        Automatically select the available compute device.
-        """
-
         if device != "auto":
             return device
 
@@ -81,25 +73,15 @@ class PatchTSTTrainer:
     def _normalize(
         batch: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        RevIN-style instance normalization.
-        """
-
         mean = batch.mean(dim=1, keepdim=True)
         std = batch.std(dim=1, keepdim=True) + 1e-5
-
         normalized = (batch - mean) / std
-
         return normalized, mean, std
 
     def train_epoch(
         self,
         dataloader: DataLoader,
     ) -> float:
-        """
-        Train the model for one epoch.
-        """
-
         self.model.train()
 
         running_loss = 0.0
@@ -139,10 +121,6 @@ class PatchTSTTrainer:
         self,
         dataset: WindowDataset,
     ) -> PatchTSTNetwork:
-        """
-        Train the PatchTST model.
-        """
-
         if len(dataset) == 0:
             raise ValueError(
                 "Dataset contains no training windows."

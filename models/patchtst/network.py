@@ -12,10 +12,10 @@ from torch import nn
 class PatchTSTNetwork(nn.Module):
     def __init__(
         self,
-        context: int,
-        horizon: int,
+        context_length: int,
+        prediction_length: int,
         n_quantiles: int,
-        patch_len: int = 16,
+        patch_length: int = 16,
         stride: int = 8,
         d_model: int = 128,
         n_heads: int = 8,
@@ -24,17 +24,17 @@ class PatchTSTNetwork(nn.Module):
     ):
         super().__init__()
 
-        self.context = context
-        self.horizon = horizon
+        self.context_length = context_length
+        self.prediction_length = prediction_length
         self.n_quantiles = n_quantiles
-        self.patch_len = patch_len
+        self.patch_length = patch_length
         self.stride = stride
 
         # Number of patches
-        self.n_patches = (context - patch_len) // stride + 1
+        self.n_patches = (context_length - patch_length) // stride + 1
 
         # Patch embedding
-        self.patch_embedding = nn.Linear(patch_len, d_model)
+        self.patch_embedding = nn.Linear(patch_length,d_model,)
 
         # Learnable positional embeddings
         self.position_embedding = nn.Parameter(
@@ -59,7 +59,7 @@ class PatchTSTNetwork(nn.Module):
         # Forecast head
         self.head = nn.Linear(
             d_model * self.n_patches,
-            horizon * n_quantiles,
+            prediction_length * n_quantiles,
         )
 
     def patchify(self, x: torch.Tensor) -> torch.Tensor:
@@ -74,7 +74,7 @@ class PatchTSTNetwork(nn.Module):
         """
         return x.unfold(
             dimension=1,
-            size=self.patch_len,
+            size=self.patch_length,
             step=self.stride,
         )
 
@@ -93,6 +93,6 @@ class PatchTSTNetwork(nn.Module):
 
         return output.view(
             -1,
-            self.horizon,
+            self.prediction_length,
             self.n_quantiles,
         )
