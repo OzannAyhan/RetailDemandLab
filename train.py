@@ -1,28 +1,43 @@
 import torch
 
 from data.synthetic import SyntheticRetailDataset
+from data.m5_loader import M5Dataset
 from data.windows import WindowDataset
 from models.patchtst.trainer import PatchTSTTrainer
 
 
+# -------------------------------------------------------
+# Dataset selection
+# -------------------------------------------------------
+
+USE_M5 = True
+
+
 def main():
 
-    # ------------------------------------------------------------------
-    # Generate synthetic retail data
-    # ------------------------------------------------------------------
+    if USE_M5:
 
-    generator = SyntheticRetailDataset(
-        num_series=500,
-        series_length=730,
-        seasonality=7,
-        seed=42,
-    )
+        print("Loading M5 dataset...")
+
+        generator = M5Dataset(
+            sales_path="data/raw/sales_train_evaluation.csv",
+            max_series=500,
+        )
+
+    else:
+
+        print("Generating synthetic dataset...")
+
+        generator = SyntheticRetailDataset(
+            num_series=500,
+            series_length=730,
+            seasonality=7,
+            seed=42,
+        )
 
     panel = generator.generate()
 
-    # ------------------------------------------------------------------
-    # Create sliding-window dataset
-    # ------------------------------------------------------------------
+    print(f"Loaded {len(panel)} time series.")
 
     context_length = 96
     prediction_length = 24
@@ -34,10 +49,6 @@ def main():
     )
 
     print(f"Generated {len(dataset)} training windows.")
-
-    # ------------------------------------------------------------------
-    # Configure PatchTST trainer
-    # ------------------------------------------------------------------
 
     trainer = PatchTSTTrainer(
         context_length=context_length,
@@ -56,15 +67,7 @@ def main():
         seed=42,
     )
 
-    # ------------------------------------------------------------------
-    # Train model
-    # ------------------------------------------------------------------
-
     model = trainer.fit(dataset)
-
-    # ------------------------------------------------------------------
-    # Save weights
-    # ------------------------------------------------------------------
 
     torch.save(
         model.state_dict(),
