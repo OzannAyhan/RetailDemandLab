@@ -21,6 +21,17 @@ def root_mean_squared_error(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch
     return torch.sqrt(mean_squared_error(y_true, y_pred))
 
 
+def weighted_absolute_percentage_error(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch.Tensor:
+    if y_true.shape != y_pred.shape:
+        raise ValueError(f"Shape mismatch: {y_true.shape} vs {y_pred.shape}")
+
+    denominator = torch.abs(y_true)
+    if torch.sum(denominator) == 0:
+        return torch.tensor(float("nan"), dtype=y_true.dtype)
+
+    return torch.sum(torch.abs(y_true - y_pred)) / torch.sum(denominator) * 100.0
+
+
 def normalized_root_mean_squared_error(y_true: torch.Tensor, y_pred: torch.Tensor, epsilon: float = 1e-8) -> torch.Tensor:
     if y_true.shape != y_pred.shape:
         raise ValueError(f"Shape mismatch: {y_true.shape} vs {y_pred.shape}")
